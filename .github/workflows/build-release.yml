@@ -87,11 +87,10 @@ jobs:
           ln -s "$CACHE_DIR_DL" "dl"
           ln -s "$CACHE_DIR_FEEDS" "feeds"
           cp feeds.conf.default feeds.conf
-          # 适配LEDE源（coolsnowwolf）
-          sed -i '/openwrt.org/d' feeds.conf
-          echo "src-git lede https://github.com/coolsnowwolf/lede" >> feeds.conf
-          echo "src-git packages https://github.com/coolsnowwolf/packages" >> feeds.conf
-          echo "src-git luci https://github.com/coolsnowwolf/luci" >> feeds.conf
+          sed -i 's#git.openwrt.org/openwrt/openwrt#github.com/openwrt/openwrt#' feeds.conf
+          sed -i 's#git.openwrt.org/feed/packages#github.com/openwrt/packages#' feeds.conf
+          sed -i 's#git.openwrt.org/project/luci#github.com/openwrt/luci#' feeds.conf
+          sed -i 's#git.openwrt.org/feed/telephony#github.com/openwrt/telephony#' feeds.conf
           cd -
       - name: Update and Install Packages
         run: |
@@ -104,8 +103,6 @@ jobs:
         run: |
           cd "$SDK_HOME"
           make defconfig
-          # 跳过内核模块依赖检查（LEDE中部分kmod命名不同）
-          sed -i '/DEPENDS.*/d' package/$PACKAGE_NAME/Makefile
           make package/${PACKAGE_NAME}/status/{clean,compile} V=s
           find "$SDK_HOME/bin/" -type f -name "*.ipk" -exec ls -lh {} \;
           cd -
