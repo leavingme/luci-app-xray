@@ -19,10 +19,8 @@ jobs:
       matrix:
         include:
           - arch: aarch64_generic
-            # LEDE (coolsnowwolf) armsr/armv8 SDK（适配24.10.5/6.18内核）
-            # 若官方LEDE SDK不可直接下载，改用OpenWrt 24.02 aarch64 SDK（更接近你的系统版本）
-            sdk_url_path: https://downloads.openwrt.org/releases/24.02.0/targets/armsr/armv8
-            sdk_name: -sdk-24.02.0-armsr-armv8_
+            sdk_url_path: https://downloads.openwrt.org/releases/23.05.5/targets/armsr/armv8
+            sdk_name: -sdk-23.05.5-armsr-armv8_
 
     env:
       SDK_URL_PATH: ${{ matrix.sdk_url_path }}
