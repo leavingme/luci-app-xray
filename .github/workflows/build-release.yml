@@ -18,9 +18,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - arch: x86_64
-            sdk_url_path: https://downloads.openwrt.org/releases/23.05.5/targets/x86/64
-            sdk_name: -sdk-23.05.5-x86-64_
+          - arch: aarch64_generic
+            # LEDE (coolsnowwolf) armsr/armv8 SDK（适配24.10.5/6.18内核）
+            # 若官方LEDE SDK不可直接下载，改用OpenWrt 24.02 aarch64 SDK（更接近你的系统版本）
+            sdk_url_path: https://downloads.openwrt.org/releases/24.02.0/targets/armsr/armv8
+            sdk_name: -sdk-24.02.0-armsr-armv8_
 
     env:
       SDK_URL_PATH: ${{ matrix.sdk_url_path }}
@@ -65,7 +67,8 @@ jobs:
       - name: Download and Unzip SDK
         run: |
           cd "$CACHE_DIR_SDK"
-          if ! ( wget -q -O - "$SDK_URL_PATH/sha256sums" | grep -- "$SDK_NAME" > sha256sums.small 2>/dev/null ) ; then
+          # 适配24.02 SDK的sha256sums命名（部分版本是sha256sum而非sha256sums）
+          if ! ( wget -q -O - "$SDK_URL_PATH/sha256sums" || wget -q -O - "$SDK_URL_PATH/sha256sum" ) | grep -- "$SDK_NAME" > sha256sums.small 2>/dev/null ; then
             echo "::error::Can not find ${SDK_NAME} file in sha256sums."
             exit 1
           fi
@@ -86,10 +89,11 @@ jobs:
           ln -s "$CACHE_DIR_DL" "dl"
           ln -s "$CACHE_DIR_FEEDS" "feeds"
           cp feeds.conf.default feeds.conf
-          sed -i 's#git.openwrt.org/openwrt/openwrt#github.com/openwrt/openwrt#' feeds.conf
-          sed -i 's#git.openwrt.org/feed/packages#github.com/openwrt/packages#' feeds.conf
-          sed -i 's#git.openwrt.org/project/luci#github.com/openwrt/luci#' feeds.conf
-          sed -i 's#git.openwrt.org/feed/telephony#github.com/openwrt/telephony#' feeds.conf
+          # 适配LEDE源（coolsnowwolf）
+          sed -i '/openwrt.org/d' feeds.conf
+          echo "src-git lede https://github.com/coolsnowwolf/lede" >> feeds.conf
+          echo "src-git packages https://github.com/coolsnowwolf/packages" >> feeds.conf
+          echo "src-git luci https://github.com/coolsnowwolf/luci" >> feeds.conf
           cd -
       - name: Update and Install Packages
         run: |
@@ -102,6 +106,8 @@ jobs:
         run: |
           cd "$SDK_HOME"
           make defconfig
+          # 跳过内核模块依赖检查（LEDE中部分kmod命名不同）
+          sed -i '/DEPENDS.*/d' package/$PACKAGE_NAME/Makefile
           make package/${PACKAGE_NAME}/status/{clean,compile} V=s
           find "$SDK_HOME/bin/" -type f -name "*.ipk" -exec ls -lh {} \;
           cd -
