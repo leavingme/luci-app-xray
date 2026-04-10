@@ -29,11 +29,11 @@ jobs:
       CONFIG_CCACHE: y
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Prepare Cache Key
         id: cache_key
-        run: echo "::set-output name=timestamp::$(date +"%s")"
+        run: echo "timestamp=$(date +"%s")" >> $GITHUB_OUTPUT
 
       - name: Setup Cache
         uses: actions/cache@v4
